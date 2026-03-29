@@ -7,7 +7,7 @@ React frontend and Cloudflare Workers BFF (Backend for Frontend) for the templat
 This repo contains two tightly coupled layers:
 
 - **React app** — the browser UI, hosted on Cloudflare Pages
-- **BFF (Cloudflare Workers)** — sits between the frontend and the Spring Boot backend, owns the OAuth flow, and proxies API requests
+- **BFF (Cloudflare Workers)** — sits between the frontend and the Spring Boot backend, owns the OAuth flow, and proxies API requests via gRPC-Web
 
 These live together because the BFF exists solely to serve the frontend. They share a Cloudflare deployment and are deployed together.
 
@@ -16,11 +16,11 @@ These live together because the BFF exists solely to serve the frontend. They sh
 ```
 Browser (React)
     │
-    │  session cookie (HttpOnly)
+    │  HTTP/3 (handled automatically by Cloudflare)
     ▼
 Cloudflare Workers — BFF (Bezzie)
     │
-    │  Authorization: Bearer <token>
+    │  gRPC-Web over HTTP/2 + Bearer token
     ▼
 Spring Boot backend (Fly.io)
 ```
@@ -41,7 +41,7 @@ The BFF owns the full OAuth flow. JWTs never touch the browser.
 ### Per-request flow
 1. React sends requests to the BFF with the session cookie
 2. BFF validates the session, refreshes the token if expired
-3. BFF forwards the request to Spring Boot with `Authorization: Bearer <token>`
+3. BFF forwards the request to Spring Boot via gRPC-Web with `Authorization: Bearer <token>`
 
 The frontend never holds a token. It just uses the session cookie.
 
@@ -49,10 +49,11 @@ The frontend never holds a token. It just uses the session cookie.
 
 | Layer | Technology |
 |---|---|
-| UI | React |
+| UI | React + Vite |
 | BFF | Cloudflare Workers + Hono |
 | Auth library | Bezzie (`bezzie`) |
 | Session storage | Cloudflare KV |
+| BFF → Backend protocol | gRPC-Web over HTTP/2 |
 | Hosting | Cloudflare Pages + Workers |
 
 ## Auth0 Config
@@ -73,4 +74,4 @@ The BFF needs the following Auth0 values (set as Workers secrets):
 
 ## Part of
 
-See [template-application-planning](https://github.com/neilpmas/template-application-planning) for the full stack overview and architecture decisions.
+See [template-application-planning](https://github.com/neilpmas/template-application-planning) for the full stack overview, architecture decisions, and project workflow.
