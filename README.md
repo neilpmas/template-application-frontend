@@ -50,6 +50,8 @@ The frontend never holds a token. It just uses the session cookie.
 | Layer | Technology |
 |---|---|
 | UI | React + Vite |
+| Styling | Tailwind CSS |
+| Components | shadcn/ui (Radix UI primitives) |
 | BFF | Cloudflare Workers + Hono |
 | Auth library | Bezzie (`bezzie`) |
 | Session storage | Cloudflare KV |
