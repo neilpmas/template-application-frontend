@@ -70,6 +70,14 @@ The BFF needs the following Auth0 values (set as Workers secrets):
 | `AUTH0_AUDIENCE` | API identifier, e.g. `https://api.yourproject.com` |
 | `APP_BASE_URL` | e.g. `https://app.yourproject.com` |
 
+## Testing
+
+| Layer | Approach |
+|---|---|
+| BFF (Workers) | Vitest + `@cloudflare/vitest-pool-workers` |
+| React | Vitest + React Testing Library |
+| E2E | Playwright |
+
 ## Setup
 
 > Setup instructions to be added when the scaffold is built.
