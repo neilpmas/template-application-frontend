@@ -10,18 +10,18 @@
     "lint": "eslint src"
   },
   "dependencies": {
-    "bezzie": "^0.1.5",
+    "bezzie": "^1.0.1",
     "hono": "^4"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "0.7.0",
+    "@cloudflare/vitest-pool-workers": "^0.15.0",
     "@cloudflare/workers-types": "latest",
-    "@eslint/js": "^9.39.4",
-    "eslint": "^9",
-    "globals": "^14.0.0",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.2.1",
+    "globals": "^17.5.0",
     "typescript": "^6",
-    "typescript-eslint": "^8.58.0",
-    "vitest": "^3",
+    "typescript-eslint": "^8.59.1",
+    "vitest": "^4.1.5",
     "wrangler": "^4"
   }
 }
