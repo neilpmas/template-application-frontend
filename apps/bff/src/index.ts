@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { createBezzie, providers, cloudflareKV } from 'bezzie'
+import { createBezzie, providers, cloudflareKVAdapter } from 'bezzie'
 
 export interface Env {
   SESSION_KV: KVNamespace
@@ -16,7 +16,7 @@ export default {
       clientId: env.AUTH0_CLIENT_ID,
       clientSecret: env.AUTH0_CLIENT_SECRET,
       audience: env.AUTH0_AUDIENCE,
-      adapter: cloudflareKV(env.SESSION_KV),
+      adapter: cloudflareKVAdapter(env.SESSION_KV),
       baseUrl: env.APP_BASE_URL,
     })
 
