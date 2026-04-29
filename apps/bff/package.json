@@ -10,6 +10,9 @@
     "lint": "eslint src"
   },
   "dependencies": {
+    "@connectrpc/connect": "^2.0.0",
+    "@connectrpc/connect-web": "^2.0.0",
+    "@template/proto": "*",
     "bezzie": "^1.0.1",
     "hono": "^4"
   },

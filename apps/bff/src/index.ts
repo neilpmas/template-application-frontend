@@ -1,5 +1,8 @@
 import { Hono } from 'hono'
 import { createBezzie, providers, cloudflareKVAdapter } from 'bezzie'
+import { createClient } from '@connectrpc/connect'
+import { createGrpcWebTransport } from '@connectrpc/connect-web'
+import { TemplateService } from '@template/proto'
 
 export interface Env {
   SESSION_KV: KVNamespace
@@ -7,6 +10,7 @@ export interface Env {
   AUTH0_CLIENT_SECRET: string
   AUTH0_AUDIENCE: string
   APP_BASE_URL: string
+  BACKEND_URL: string
 }
 
 export default {
@@ -23,6 +27,13 @@ export default {
     const app = new Hono<{ Bindings: Env }>()
     app.route('/auth', auth.routes())
     app.get('/api/me', auth.middleware(), (c) => c.json(c.var.user))
+
+    app.get('/api/info', auth.middleware(), async (c) => {
+      const transport = createGrpcWebTransport({ baseUrl: c.env.BACKEND_URL })
+      const client = createClient(TemplateService, transport)
+      const info = await client.getServerInfo({})
+      return c.json(info)
+    })
 
     return app.fetch(request, env, ctx)
   }
