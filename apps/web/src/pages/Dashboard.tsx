@@ -1,4 +1,5 @@
 import { useUser } from "@/hooks/useUser"
+import { useServerInfo } from "@/hooks/useServerInfo"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
@@ -10,6 +11,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
  */
 export default function Dashboard() {
   const { user } = useUser()
+  const { info, loading } = useServerInfo()
 
   if (!user) return null
 
@@ -39,6 +41,24 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent>
           <p>Welcome to your dashboard!</p>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Server</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Loading...</p>
+          ) : info ? (
+            <dl className="text-sm space-y-1">
+              <div><dt className="inline font-medium">Version: </dt><dd className="inline">{info.version}</dd></div>
+              <div><dt className="inline font-medium">Environment: </dt><dd className="inline">{info.environment}</dd></div>
+            </dl>
+          ) : (
+            <p className="text-sm text-muted-foreground">Unavailable</p>
+          )}
         </CardContent>
       </Card>
     </div>
