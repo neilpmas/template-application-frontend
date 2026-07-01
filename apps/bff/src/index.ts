@@ -1,8 +1,9 @@
 import { Hono } from 'hono'
 import { createBezzie, providers, cloudflareKVAdapter } from 'bezzie'
 import { createClient } from '@connectrpc/connect'
-import { createGrpcWebTransport } from '@connectrpc/connect-web'
+import { createConnectTransport } from '@connectrpc/connect-web'
 import { TemplateService } from '@template/proto'
+import { workersFetch } from './lib/workersFetch'
 
 export interface Env {
   SESSION_KV: KVNamespace
@@ -29,7 +30,11 @@ export default {
     app.get('/api/me', auth.middleware(), (c) => c.json(c.var.user))
 
     app.get('/api/info', auth.middleware(), async (c) => {
-      const transport = createGrpcWebTransport({ baseUrl: c.env.BACKEND_URL })
+      const transport = createConnectTransport({
+        baseUrl: `${c.env.BACKEND_URL}/connect`,
+        useBinaryFormat: true,
+        fetch: workersFetch,
+      })
       const client = createClient(TemplateService, transport)
       const info = await client.getServerInfo({})
       return c.json(info)
