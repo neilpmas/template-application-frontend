@@ -7,7 +7,7 @@ React frontend and Cloudflare Workers BFF (Backend for Frontend) for the templat
 - React 19 + Vite + Tailwind CSS + shadcn/ui — web UI ready to build on
 - Cloudflare Workers BFF — owns the OAuth flow, session cookies, proxies to the backend
 - Bezzie — BFF auth library handles the full Auth0 Authorization Code + PKCE flow
-- gRPC-Web client — generated TypeScript client for talking to the Spring Boot backend
+- Connect protocol client — generated TypeScript client for talking to the Spring Boot backend
 - Vitest — unit tests for React and the BFF Worker
 - GitHub Actions CI — lint, test, build, deploy to Cloudflare Pages + Workers on merge to main
 - Dependabot — weekly dependency updates, auto-merged for patch/minor
@@ -17,7 +17,7 @@ React frontend and Cloudflare Workers BFF (Backend for Frontend) for the templat
 This repo contains two tightly coupled layers that deploy together:
 
 - **React app** (`apps/web`) — the browser UI, hosted on Cloudflare Pages
-- **BFF** (`apps/bff`) — Cloudflare Worker that sits between the browser and the Spring Boot backend, owns the OAuth flow, and proxies API requests via gRPC-Web
+- **BFF** (`apps/bff`) — Cloudflare Worker that sits between the browser and the Spring Boot backend, owns the OAuth flow, and proxies API requests via Connect protocol
 
 These live together because the BFF exists solely to serve the frontend. They share a Cloudflare deployment.
 
@@ -27,9 +27,9 @@ These live together because the BFF exists solely to serve the frontend. They sh
 template-application-frontend/
 ├── apps/
 │   ├── web/          ← React app (Vite, Tailwind, shadcn/ui)
-│   └── bff/          ← Cloudflare Worker (Bezzie, gRPC-Web proxy)
+│   └── bff/          ← Cloudflare Worker (Bezzie, Connect protocol proxy)
 └── packages/
-    ├── proto/        ← Protobuf definitions + generated TypeScript gRPC-Web client
+    ├── proto/        ← Protobuf definitions + generated TypeScript Connect client
     ├── types/        ← shared TypeScript types
     └── api-client/   ← shared API client utilities
 ```
@@ -38,41 +38,29 @@ Managed by [Turborepo](https://turbo.build) — `npm run dev` starts both apps i
 
 ## Architecture
 
-```
-Browser (React)
-    │
-    │  HTTP/3 (Cloudflare handles this automatically)
-    ▼
-Cloudflare Workers — BFF (Bezzie)
-    │
-    │  gRPC-Web over HTTP/2 + Bearer token
-    ▼
-Spring Boot backend (Fly.io)
+```mermaid
+C4Container
+    title Template Application Frontend — Container Diagram
+
+    Person(user, "User", "Browser user")
+
+    System_Boundary(cf, "Cloudflare") {
+        Container(react, "React App", "React, Vite", "Web UI")
+        Container(bff, "BFF", "Cloudflare Workers, Bezzie", "Owns the OAuth flow, issues a session cookie, proxies to the backend")
+    }
+
+    System_Ext(backend, "Spring Boot Backend", "External — hosted on Fly.io")
+
+    Rel(user, react, "Uses", "HTTP/3")
+    Rel(react, bff, "Calls", "same-origin")
+    Rel(bff, backend, "Calls", "Connect protocol, Bearer token")
 ```
 
 ## Auth
 
-Auth is handled by **[Bezzie](https://github.com/neilpmas/bezzie)** — an open source BFF OAuth 2.0 library for Cloudflare Workers. JWTs never touch the browser.
+Auth is handled by **[Bezzie](https://github.com/neilpmas/bezzie)** — an open source BFF OAuth 2.0 library for Cloudflare Workers. JWTs never touch the browser; the React app holds only a session cookie.
 
-### Login flow
-
-```
-React → BFF /auth/login → Auth0 (Authorization Code + PKCE)
-                                  │
-                             code returned
-                                  │
-             BFF exchanges code for tokens → stored in Cloudflare KV
-             BFF issues HttpOnly; Secure; SameSite=Strict session cookie → React
-```
-
-### Per-request flow
-
-```
-React (session cookie) → BFF → validates session, refreshes token if needed
-                              → Spring Boot (gRPC-Web + Authorization: Bearer <token>)
-```
-
-The React app never holds a token. It uses the session cookie for every request.
+Full login and per-request flow diagrams live in [template-application-planning](https://github.com/neilpmas/template-application-planning#web-bff-based-oauth-bcp212) — this repo implements that flow, it isn't the source of truth for it.
 
 ## Stack
 
@@ -86,7 +74,7 @@ The React app never holds a token. It uses the session cookie for every request.
 | BFF | Cloudflare Workers | — |
 | Auth library | [Bezzie](https://github.com/neilpmas/bezzie) | — |
 | Session storage | Cloudflare KV | — |
-| BFF → Backend | gRPC-Web over HTTP/2 | — |
+| BFF → Backend | Connect protocol | — |
 | Hosting | Cloudflare Pages + Workers | — |
 
 ## Local development
@@ -146,9 +134,9 @@ Register a separate Auth0 **Regular Web Application** for local dev (don't reuse
 - **Allowed Logout URLs:** `http://localhost:5173`
 - **Allowed Web Origins:** `http://localhost:5173`
 
-### gRPC-Web client
+### Connect protocol client
 
-The TypeScript gRPC-Web client is pre-generated in `packages/proto/src/gen/`. To regenerate from updated `.proto` files:
+The TypeScript Connect client is pre-generated in `packages/proto/src/gen/`. To regenerate from updated `.proto` files:
 
 ```bash
 cd packages/proto && npm run generate
