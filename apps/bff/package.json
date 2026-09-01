@@ -20,7 +20,7 @@
     "@cloudflare/vitest-pool-workers": "^0.22.0",
     "@cloudflare/workers-types": "^5.20260820.1",
     "@eslint/js": "^10.0.1",
-    "eslint": "^10.7.0",
+    "eslint": "^10.9.1",
     "globals": "^17.9.0",
     "typescript": "^6",
     "typescript-eslint": "^8.65.0",
