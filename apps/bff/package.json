@@ -18,13 +18,13 @@
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.22.0",
-    "@cloudflare/workers-types": "^5.20260820.1",
+    "@cloudflare/workers-types": "^5.20260926.1",
     "@eslint/js": "^10.0.1",
     "eslint": "^10.10.0",
-    "globals": "^17.9.0",
+    "globals": "^17.12.0",
     "typescript": "^6",
     "typescript-eslint": "^8.65.0",
     "vitest": "^4.1.10",
-    "wrangler": "^4.129.0"
+    "wrangler": "^4.141.0"
   }
 }
