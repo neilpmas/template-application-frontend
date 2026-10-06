@@ -1,0 +1,61 @@
+name: Nudge stale Dependabot PRs
+
+# Opt-in: this workflow does nothing until a DEPENDABOT_PAT repo secret is
+# added. This is a public template, and the template's own CI must never depend
+# on secrets or real infrastructure -- repos created from it start with no
+# secrets, so without the gate below this job would fail every Monday.
+#
+# To enable it, create a fine-grained personal access token scoped to this
+# repository only, with "Pull requests: Read and write" as its only permission,
+# and add it as a repository secret named DEPENDABOT_PAT
+# (Settings -> Secrets and variables -> Actions -> New repository secret).
+
+on:
+  schedule:
+    - cron: "0 4 * * 1" # weekly, Monday 04:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  pull-requests: write
+
+jobs:
+  recreate-stale:
+    runs-on: ubuntu-latest
+    steps:
+      # A Dependabot PR that fails CI (e.g. a dependency needing an upstream fix
+      # that doesn't exist yet) just sits open indefinitely -- auto-merge never
+      # fires on red CI, so nothing unsafe happens, but nothing ever re-checks it
+      # either. "@dependabot recreate" makes Dependabot regenerate the PR against
+      # the current registry state and current main, so a fix that lands upstream
+      # gets picked up here automatically instead of waiting on someone to notice.
+      #
+      # "@dependabot recreate" only works on PRs that are still open, so leave a
+      # blocked Dependabot PR open rather than closing it -- once closed, this
+      # workflow can no longer nudge it.
+      - name: Comment @dependabot recreate on Dependabot PRs open over 7 days
+        env:
+          # Dependabot only honors comment commands from an identity with real
+          # push access -- it silently rejects them from the default
+          # github-actions[bot] actor ("only users with push access can use
+          # that command"), even with pull-requests: write granted on the
+          # token. DEPENDABOT_PAT is a fine-grained PAT scoped to just this
+          # repo's pull requests, so the comment lands as an account Dependabot
+          # actually recognizes. If the secret isn't set this is empty, and the
+          # script below skips cleanly (secrets can't be tested in a step-level
+          # if:, so the check lives in the script).
+          GH_TOKEN: ${{ secrets.DEPENDABOT_PAT }}
+          # No actions/checkout in this job -- gh normally infers the repo from
+          # the local git remote, which doesn't exist without one. GH_REPO tells
+          # it directly instead.
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "DEPENDABOT_PAT not set - skipping"
+            exit 0
+          fi
+          gh pr list --search "author:app/dependabot is:open" --json number,createdAt \
+            --jq '.[] | select((now - (.createdAt | fromdateiso8601)) > (7 * 86400)) | .number' \
+            | while read -r pr; do
+                echo "Nudging PR #$pr"
+                gh pr comment "$pr" --body "@dependabot recreate"
+              done
